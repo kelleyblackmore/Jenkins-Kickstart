@@ -1,0 +1,25 @@
+# Minimal Jenkins-Kickstart Configuration
+# This is the simplest possible configuration
+
+jenkins:
+  url: "http://localhost:8080"
+  username: "admin"
+  password: "admin"
+
+folders: []
+
+jobs:
+  - name: "test-job"
+    type: "pipeline"
+    description: "A simple test job"
+    script: |
+      pipeline {
+        agent any
+        stages {
+          stage('Test') {
+            steps {
+              echo 'This is a test job'
+            }
+          }
+        }
+      }

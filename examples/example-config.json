@@ -1,0 +1,37 @@
+{
+  "jenkins": {
+    "url": "http://localhost:8080",
+    "username": "admin",
+    "password": "admin"
+  },
+  "folders": [
+    {
+      "name": "development",
+      "description": "Development environment jobs",
+      "parent": ""
+    },
+    {
+      "name": "production",
+      "description": "Production environment jobs",
+      "parent": ""
+    }
+  ],
+  "jobs": [
+    {
+      "name": "build-application",
+      "folder": "development",
+      "type": "pipeline",
+      "description": "Build and test the main application",
+      "git_url": "https://github.com/example/repo.git",
+      "git_branch": "*/main",
+      "jenkinsfile": "Jenkinsfile"
+    },
+    {
+      "name": "hello-world",
+      "folder": "",
+      "type": "pipeline",
+      "description": "Simple hello world pipeline",
+      "script": "pipeline {\n  agent any\n  stages {\n    stage('Hello') {\n      steps {\n        echo 'Hello, World!'\n      }\n    }\n  }\n}"
+    }
+  ]
+}

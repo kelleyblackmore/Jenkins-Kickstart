@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools-scm>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jenkins-kickstart"
+version = "0.1.0"
+description = "A Python package to kickstart Jenkins configuration after instance setup"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "MIT"}
+authors = [
+    {name = "Jenkins-Kickstart Contributors"}
+]
+dependencies = [
+    "python-jenkins>=1.7.0",
+    "pyyaml>=5.4",
+    "requests>=2.25.0",
+]
+
+[project.scripts]
+jenkins-kickstart = "jenkins_kickstart.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/kelleyblackmore/Jenkins-Kickstart"
+Repository = "https://github.com/kelleyblackmore/Jenkins-Kickstart"
