@@ -1,0 +1,205 @@
+# Advanced Jenkins-Kickstart Configuration
+# This example demonstrates all available features
+
+jenkins:
+  url: "http://jenkins.example.com:8080"
+  username: "admin"
+  # Use API token for better security (recommended)
+  token: "1234567890abcdef1234567890abcdef12"
+  # Or use password (not recommended)
+  # password: "admin"
+
+# Create a hierarchical folder structure
+folders:
+  # Top-level folders
+  - name: "microservices"
+    description: "Microservices applications"
+    parent: ""
+  
+  - name: "infrastructure"
+    description: "Infrastructure and DevOps"
+    parent: ""
+  
+  # Nested folders under microservices
+  - name: "api-gateway"
+    description: "API Gateway service"
+    parent: "microservices"
+  
+  - name: "user-service"
+    description: "User management service"
+    parent: "microservices"
+  
+  - name: "payment-service"
+    description: "Payment processing service"
+    parent: "microservices"
+  
+  # Nested folders under infrastructure
+  - name: "terraform"
+    description: "Terraform infrastructure as code"
+    parent: "infrastructure"
+  
+  - name: "monitoring"
+    description: "Monitoring and alerting jobs"
+    parent: "infrastructure"
+
+# Define various types of jobs
+jobs:
+  # Pipeline job pulling from Git with Jenkinsfile
+  - name: "api-gateway-build"
+    folder: "microservices/api-gateway"
+    type: "pipeline"
+    description: "Build and test API Gateway microservice"
+    git_url: "https://github.com/example/api-gateway.git"
+    git_branch: "*/main"
+    git_credentials: "github-ssh-key"
+    jenkinsfile: "Jenkinsfile"
+  
+  # Pipeline job with custom Jenkinsfile path
+  - name: "api-gateway-deploy"
+    folder: "microservices/api-gateway"
+    type: "pipeline"
+    description: "Deploy API Gateway to staging"
+    git_url: "https://github.com/example/api-gateway.git"
+    git_branch: "*/main"
+    git_credentials: "github-ssh-key"
+    jenkinsfile: "deploy/Jenkinsfile.staging"
+  
+  # Pipeline with inline script - full pipeline
+  - name: "user-service-build"
+    folder: "microservices/user-service"
+    type: "pipeline"
+    description: "Build user service with inline pipeline"
+    script: |
+      pipeline {
+        agent any
+        
+        environment {
+          DOCKER_REGISTRY = 'registry.example.com'
+          SERVICE_NAME = 'user-service'
+        }
+        
+        stages {
+          stage('Checkout') {
+            steps {
+              git branch: 'main', url: 'https://github.com/example/user-service.git'
+            }
+          }
+          
+          stage('Build') {
+            steps {
+              sh 'mvn clean package'
+            }
+          }
+          
+          stage('Test') {
+            steps {
+              sh 'mvn test'
+            }
+          }
+          
+          stage('Docker Build') {
+            steps {
+              sh "docker build -t ${DOCKER_REGISTRY}/${SERVICE_NAME}:${BUILD_NUMBER} ."
+            }
+          }
+          
+          stage('Push') {
+            steps {
+              sh "docker push ${DOCKER_REGISTRY}/${SERVICE_NAME}:${BUILD_NUMBER}"
+            }
+          }
+        }
+        
+        post {
+          success {
+            echo 'Build successful!'
+          }
+          failure {
+            echo 'Build failed!'
+          }
+        }
+      }
+  
+  # Simple pipeline with inline script
+  - name: "payment-health-check"
+    folder: "microservices/payment-service"
+    type: "pipeline"
+    description: "Health check for payment service"
+    script: |
+      pipeline {
+        agent any
+        triggers {
+          cron('H/15 * * * *')
+        }
+        stages {
+          stage('Health Check') {
+            steps {
+              sh '''
+                curl -f http://payment-service:8080/health || exit 1
+                echo "Payment service is healthy"
+              '''
+            }
+          }
+        }
+      }
+  
+  # Freestyle job with multiple shell commands
+  - name: "terraform-apply"
+    folder: "infrastructure/terraform"
+    type: "freestyle"
+    description: "Apply Terraform infrastructure changes"
+    commands:
+      - "#!/bin/bash"
+      - "set -e"
+      - "cd terraform/"
+      - "terraform init"
+      - "terraform plan -out=tfplan"
+      - "terraform apply tfplan"
+      - "echo 'Infrastructure updated successfully'"
+  
+  # Freestyle job - simple script
+  - name: "cleanup-old-builds"
+    folder: "infrastructure"
+    type: "freestyle"
+    description: "Clean up old build artifacts"
+    commands:
+      - "find /var/jenkins_home/jobs -name 'builds' -type d -mtime +30 -exec rm -rf {} +"
+      - "docker system prune -af --filter 'until=720h'"
+  
+  # Monitoring job
+  - name: "prometheus-backup"
+    folder: "infrastructure/monitoring"
+    type: "freestyle"
+    description: "Backup Prometheus data"
+    commands:
+      - "timestamp=$(date +%Y%m%d_%H%M%S)"
+      - "tar -czf /backups/prometheus_${timestamp}.tar.gz /var/prometheus/data"
+      - "echo 'Backup completed'"
+  
+  # Root-level utility job
+  - name: "system-diagnostics"
+    folder: ""
+    type: "pipeline"
+    description: "Run system diagnostics"
+    script: |
+      pipeline {
+        agent any
+        stages {
+          stage('Disk Space') {
+            steps {
+              sh 'df -h'
+            }
+          }
+          stage('Memory') {
+            steps {
+              sh 'free -m'
+            }
+          }
+          stage('Docker') {
+            steps {
+              sh 'docker ps -a'
+              sh 'docker images'
+            }
+          }
+        }
+      }

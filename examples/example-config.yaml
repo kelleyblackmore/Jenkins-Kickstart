@@ -1,0 +1,73 @@
+# Example Jenkins-Kickstart Configuration File
+# This file demonstrates how to configure Jenkins folders, jobs, and settings
+
+jenkins:
+  # Jenkins server URL
+  url: "http://localhost:8080"
+  
+  # Authentication (use either username/password or username/token)
+  username: "admin"
+  password: "admin"  # or use token below
+  # token: "your-api-token-here"
+
+# Define folders to create in Jenkins
+folders:
+  - name: "development"
+    description: "Development environment jobs"
+    parent: ""  # Empty string means root level
+  
+  - name: "production"
+    description: "Production environment jobs"
+    parent: ""
+  
+  - name: "frontend"
+    description: "Frontend application jobs"
+    parent: "development"  # Creates development/frontend
+
+# Define jobs to create in Jenkins
+jobs:
+  # Pipeline job from Git repository
+  - name: "build-application"
+    folder: "development"  # Will be created in development folder
+    type: "pipeline"
+    description: "Build and test the main application"
+    git_url: "https://github.com/example/repo.git"
+    git_branch: "*/main"
+    git_credentials: ""  # Optional: credentials ID for private repos
+    jenkinsfile: "Jenkinsfile"  # Path to Jenkinsfile in repo
+  
+  # Pipeline job with inline script
+  - name: "hello-world"
+    folder: ""  # Root level
+    type: "pipeline"
+    description: "Simple hello world pipeline"
+    script: |
+      pipeline {
+        agent any
+        stages {
+          stage('Hello') {
+            steps {
+              echo 'Hello, World!'
+            }
+          }
+        }
+      }
+  
+  # Freestyle job
+  - name: "cleanup-job"
+    folder: "development"
+    type: "freestyle"
+    description: "Cleanup temporary files"
+    commands:
+      - "echo 'Starting cleanup...'"
+      - "rm -rf /tmp/build-*"
+      - "echo 'Cleanup complete'"
+  
+  # Another pipeline example
+  - name: "deploy-frontend"
+    folder: "development/frontend"
+    type: "pipeline"
+    description: "Deploy frontend application"
+    git_url: "https://github.com/example/frontend.git"
+    git_branch: "*/develop"
+    jenkinsfile: "deploy/Jenkinsfile"
